@@ -206,7 +206,6 @@ public:
 		}
 	}
 
-	// Équivalent de push_front()
 	void push_front(const T& valeur) {
 		auto newNode = make_unique<NodeType>(valeur);
 		first_->previous_ = newNode.get();
@@ -218,7 +217,6 @@ public:
 		size_++;
 	}
 
-	// Équivalent de push_back()
 	void push_back(const T& valeur) {
 		auto newNode = make_unique<NodeType>(valeur);
 		auto* newNodePtr = newNode.get();
@@ -233,8 +231,8 @@ public:
 		size_++;
 	}
 
-	// Pour faire comme les erase() des différents conteneurs de la stdlib, effacer() retourne un itérateur
-	iterator effacer (iterator position) {
+	// Pour faire comme les erase() des différents conteneurs de la stdlib, erase() retourne un itérateur
+	iterator erase (iterator position) {
 		// On vérifie que l'itérateur nous appartient...
 		if (position.parent_ != this)
 			throw runtime_error("You are... NOT THE FATHER!");

@@ -32,7 +32,7 @@ void runListExample() {
 	alexanderThibault.insert(it, 2);
 	cout << alexanderThibault << "\n";
 
-	it = alexanderThibault.effacer(alexanderThibault.begin());
+	it = alexanderThibault.erase(alexanderThibault.begin());
 	cout << "1er elem : " << *it << "\n";
 	alexanderThibault.pop_back();
 	alexanderThibault.pop_front();
@@ -42,7 +42,7 @@ void runListExample() {
 
 	List<int> michelleCardinal = {69, 420};
 	cout << michelleCardinal << "\n";
-	michelleCardinal.effacer(--michelleCardinal.end()); // On ne peut pas effacer le end(), car cet élément n'existe pas (il est après la fin de la liste). C'est pour cela que je fait -- sur end() pour avoir un itérateur sur le dernier élément. C'est pas mal la convention en C++.
+	michelleCardinal.erase(--michelleCardinal.end()); // On ne peut pas erase le end(), car cet élément n'existe pas (il est après la fin de la liste). C'est pour cela que je fait -- sur end() pour avoir un itérateur sur le dernier élément. C'est pas mal la convention en C++.
 	cout << michelleCardinal << "\n";
 	michelleCardinal.pop_back();
 	cout << michelleCardinal << "\n";
