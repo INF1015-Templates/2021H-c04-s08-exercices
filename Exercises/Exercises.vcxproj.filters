@@ -35,10 +35,7 @@
     <ClInclude Include="MyClass.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="School.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Animal.hpp">
+    <ClInclude Include="List.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

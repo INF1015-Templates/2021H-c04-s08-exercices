@@ -154,8 +154,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Animal.hpp" />
-    <ClInclude Include="School.hpp" />
+    <ClInclude Include="List.hpp" />
     <ClInclude Include="MyClass.hpp" />
     <ClInclude Include="print.hpp" />
   </ItemGroup>
