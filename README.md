@@ -1,14 +1,5 @@
-# Héritage multiple, ordre de construction et *vtable*
+# Complexité et conteneur non-contigus
 
-## Fichier `Animal.hpp`
+## Fichier `List.hpp`
 
-Exemple d'héritage multiple à la fin des slides, mais fonctionnel.
-
-## Fichier `MyClass.hpp`
-
-Ensemble de classes bidon qui ne font qu'afficher dans `cout` les appels de constructeurs/destructeurs/méthodes qu'on y fait pour montrer différents comportements.
-
-## Fichier `School.hpp`
-
-Exemples de classes en héritage et en composition/aggrégation, avec un petit exemple d'héritage multiple.
-
+Exemple de classe générique à liens doubles utilisant les pointeurs intelligents et incluant l'affectation/construction par copie et déplacement (*move*). Cette version est beaucoup plus complète et fonctionnelle que la version des notes de cours.

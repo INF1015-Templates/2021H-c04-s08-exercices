@@ -4,5 +4,4 @@ settings/variables.txt
 README.md
 
 Exercises/_version_prof/main.cpp
-Exercises/_version_prof/School.hpp
-Exercises/_version_prof/Clock.hpp
+Exercises/_version_prof/List.hpp

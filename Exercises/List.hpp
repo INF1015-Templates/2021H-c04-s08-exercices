@@ -36,8 +36,9 @@ template <typename> class List;
 template <typename T>
 class ListNode_impl
 {
-	// On met la classe List du même type comme friend pour qu'elle puisse accéder aux 
-	friend class List<T>;
+	// On met la classe List du même type comme friend pour qu'elle puisse accéder aux membres privés
+	template <typename>
+	friend class List;
 
 public:
 	// Un truc très courant dans la librairie standard, on fait un typedef public 'value_type' qui représente le type des valeurs qu'on contient (donc 'T' dans le cas actuel)
@@ -77,14 +78,15 @@ class ListIterator_impl
 
 public:
 	// Petit bout de code un peu avancé pour déterminer si les valeurs pointées sont constantes ou pas selon le type de List pointée.
-	using ListeValueType = typename ListT::value_type;
+	using ListValueType = typename ListT::value_type;
 	// En gros, si la liste est constante, alors le type de valeur (value_type) est le value_type de la liste avec const.
-	using value_type = typename conditional_t<is_const_v<ListT>, const ListeValueType, ListeValueType>;
+	using value_type = typename conditional_t<is_const_v<ListT>, const ListValueType, ListValueType>;
 
 	ListIterator_impl() = default;
 	ListIterator_impl(const ListIterator_impl&) = default;
 	// Un itérateur est constitué d'un noeud pointée et d'une liste parente (la liste d'où vient le noeud).
 	ListIterator_impl(NodeT* pos, ListT* parent) : elem_(pos), parent_(parent) { }
+
 	ListIterator_impl& operator=(const ListIterator_impl&) = default;
 
 	// Interface ressemblant à un pointeur. * pour accéder à la valeur, ++ et -- pour avancer/reculer, puis == et != pour comparer.
@@ -126,13 +128,17 @@ public:
 	using value_type = T; // Le type des éléments
 	using iterator = typename ListIterator_impl<List<T>, ListNode_impl<T>>; // Le type d'itérateur pour une liste modifiable
 	using const_iterator = typename ListIterator_impl<const List<T>, const ListNode_impl<T>>; // Le type d'itérateur pour une liste non-modifiable.
-	using NodeType = ListNode_impl<T>;
 
 	List() = default;
 
-	List(const List& autre) {
+	List(const List& other) {
 		// On réutilise notre opérateur d'affectation
-		*this = autre;
+		*this = other;
+	}
+
+	List(List&& other) {
+		// On réutilise notre opérateur d'affectation
+		*this = move(other);
 	}
 
 	// Ici on a un constructeur par paramètre qui prend un std::initializer_list. Présent dans tous les conteneurs de la std lib, c'est la classe qui encapsule la syntaxe où on fait par exemple std::vector<int> foo = {1, 2, 3};
@@ -151,6 +157,17 @@ public:
 		for (auto&& [e1, e2] : zip(*this, other))
 			e1 = e2;
 		return *this;
+	}
+
+	List& operator=(List&& other) {
+		if (&other == this)
+			return *this;
+
+		first_ = move(other.first_);
+		last_ = other.last_;
+		size_ = other.size_;
+		other.last_ = nullptr;
+		other.size_ = 0;
 	}
 
 	List& operator=(initializer_list<value_type> elements) {
@@ -287,6 +304,8 @@ public:
 	}
 
 private:
+	using NodeType = ListNode_impl<T>;
+
 	unique_ptr<NodeType> first_;
 	NodeType*            last_ = nullptr;
 	size_t               size_ = 0;
