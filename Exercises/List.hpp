@@ -89,8 +89,12 @@ public:
 
 	// Interface ressemblant à un pointeur. * pour accéder à la valeur, ++ et -- pour avancer/reculer, puis == et != pour comparer.
 	value_type& operator*() { return elem_->getValue(); }
+	const value_type& operator*() const { return elem_->getValue(); }
 
-	ListIterator_impl& operator++() { elem_ = elem_->getNext(); return *this; }
+	ListIterator_impl& operator++() {
+		elem_ = elem_->getNext();
+		return *this;
+	}
 
 	ListIterator_impl& operator--() {
 		// Un itérateur qui pointe vers un noeud nul et une liste valide pointe vers l'élément après le dernier élément. Donc reculer un tel itérateur nous amène au dernier élément de la liste parente.
@@ -122,6 +126,7 @@ public:
 	using value_type = T; // Le type des éléments
 	using iterator = typename ListIterator_impl<List<T>, ListNode_impl<T>>; // Le type d'itérateur pour une liste modifiable
 	using const_iterator = typename ListIterator_impl<const List<T>, const ListNode_impl<T>>; // Le type d'itérateur pour une liste non-modifiable.
+	using NodeType = ListNode_impl<T>;
 
 	List() = default;
 
@@ -133,9 +138,8 @@ public:
 	// Ici on a un constructeur par paramètre qui prend un std::initializer_list. Présent dans tous les conteneurs de la std lib, c'est la classe qui encapsule la syntaxe où on fait par exemple std::vector<int> foo = {1, 2, 3};
 	// Non ce n'est pas dans le cours, pas important à savoir, c'est juste pour ceux que ça intéresse.
 	List(initializer_list<value_type> elements) {
-		// On itère dessus avec un range-based for.
-		for (auto&& e : elements)
-			push_back(e);
+		// On réutilise notre opérateur d'affectation
+		*this = elements;
 	}
 
 	List& operator=(const List& other) {
@@ -163,87 +167,83 @@ public:
 	const_iterator begin() const { return const_iterator(first_.get(), this); }
 	const_iterator end() const { return const_iterator(nullptr, this); }
 
-	size_t size () const { return nbElements_; }
+	size_t size () const { return size_; }
 
 	void resize(size_t size) {
-		while (nbElements_ < size)
+		while (size_ < size)
 			push_back(T{});
-		while (nbElements_ > size)
-			effacerFin();
+		while (size_ > size)
+			pop_back();
 	}
 
 	// L'insertion (comme pour le insert() des conteneurs standards) se fait à l'endroit spécifié. L'élément pointé par l'argument 'position' se retrouvera donc après l'élément inséré.
-	void inserer (iterator position, const T& valeur)
-	{
+	iterator insert (iterator position, const T& value) {
 		// On vérifie que l'itérateur nous appartient...
 		if (position.parent_ != this)
 			throw runtime_error("Nah girl, I ain't yo daddy!");
 
 		// Ici, le code n'est pas nécessairement le plus concis, mais il exprime conceptuellement bien ce qui se passe.
 		if (position == end()) {
-			push_back(valeur);
+			push_back(value);
+			return --end();
 		} else if (position == begin()) {
-			insererDebut(valeur);
+			push_front(value);
+			return begin();
 		} else {
-			auto apres = position.elem_;
-			auto avant = apres->getPrevious();
-			auto nouveau = make_unique<ListNode_impl<T>>(valeur);
+			auto after = position.elem_;
+			auto before = after->previous_;
+			auto newNode = make_unique<NodeType>(value);
+			auto newNodePtr = newNode.get();
 
 			// Étant donné qu'un noeud possède son suivant, il faut faire attention à l'ordre des opérations.
-			nouveau->previous_ = avant;
-			nouveau->next_ = move(avant->next_);
-			apres->previous_ = nouveau.get();
-			avant->next_ = move(nouveau);
+			newNode->previous_ = before;
+			newNode->next_ = move(before->next_);
+			after->previous_ = newNodePtr;
+			before->next_ = move(newNode);
 
-			nbElements_++;
+			size_++;
+			return iterator(newNodePtr, this);
 		}
 	}
 
 	// Équivalent de push_front()
-	void insererDebut (const T& valeur)
-	{
-		if (nbElements_ == 0) {
-			insererPremierElem(valeur);
-		} else {
-			auto nouveau = make_unique<ListNode_impl<T>>(valeur);
+	void push_front(const T& valeur) {
+		auto newNode = make_unique<NodeType>(valeur);
+		first_->previous_ = newNode.get();
+		newNode->next_ = move(first_);
+		first_ = move(newNode);
+		if (size_ == 0)
+			last_ = first_.get();
 
-			first_->previous_ = nouveau.get();
-			nouveau->next_ = move(first_);
-			first_ = move(nouveau);
-
-			nbElements_++;
-		}
+		size_++;
 	}
 
 	// Équivalent de push_back()
-	void push_back (const T& valeur)
-	{
-		if (nbElements_ == 0) {
-			insererPremierElem(valeur);
+	void push_back(const T& valeur) {
+		auto newNode = make_unique<NodeType>(valeur);
+		auto* newNodePtr = newNode.get();
+		if (size_ == 0) {
+			first_ = move(newNode);
 		} else {
-			auto nouveau = make_unique<ListNode_impl<T>>(valeur);
-			auto ancienDernier = last_;
-
-			nouveau->previous_ = ancienDernier;
-			last_ = nouveau.get();
-			ancienDernier->next_ = move(nouveau);
-
-			nbElements_++;
+			last_->next_ = move(newNode);
+			newNodePtr->previous_ = last_;
 		}
+
+		last_ = newNodePtr;
+		size_++;
 	}
 
 	// Pour faire comme les erase() des différents conteneurs de la stdlib, effacer() retourne un itérateur
-	iterator effacer (iterator position)
-	{
+	iterator effacer (iterator position) {
 		// On vérifie que l'itérateur nous appartient...
 		if (position.parent_ != this)
 			throw runtime_error("You are... NOT THE FATHER!");
 
-		if (position == begin() or nbElements_ == 1) {
-			effacerDebut();
+		if (position == begin() or size_ == 1) {
+			pop_front();
 			return begin();
 		} else if (position.elem_ == last_) {
-			effacerFin();
+			pop_back();
 			return end();
 		} else {
 			auto effacement = position.elem_;
@@ -258,61 +258,38 @@ public:
 		}
 	}
 
-	// Équivalent de pop_front()
-	void effacerDebut ()
-	{
+	void pop_front() {
 		if (first_->next_ != nullptr)
 			first_->next_->previous_ = nullptr;
 		first_ = move(first_->next_);
-		nbElements_--;
+		size_--;
 	}
 
-	// Équivalent de pop_back()
-	void effacerFin ()
-	{
+	void pop_back() {
 		if (last_->previous_ != nullptr) {
 			last_ = last_->previous_;
 			last_->next_.reset();
-			nbElements_--;
+			size_--;
 		} else {
-			// Si le dernier n'a pas de précédent, alors la liste a un seul élément et on réutilise effacerDebut() qui traite déjà ce cas.
-			effacerDebut();
+			// Si le dernier n'a pas de précédent, alors la liste a un seul élément et on réutilise pop_front() qui traite déjà ce cas.
+			pop_front();
 		}
 	}
 
-	void afficher (ostream& out, streamsize alignement = 0) const
-	{
-		for (auto&& e : *this)
-			out << setw(alignement) << e << " ";
+	friend ostream& operator<<(ostream& lhs, const List& rhs) {
+		auto printWidth = lhs.width();
+		lhs << "[";
+		for (auto&& [i, e] : enumerate(rhs)) {
+			lhs << setw(printWidth) << e;
+			if (i != rhs.size() - 1)
+				lhs << " ";
+		}
+		lhs << "]";
+		return lhs;
 	}
 
 private:
-	void insererPremierElem (const T& valeur)
-	{
-		first_ = make_unique<ListNode_impl<T>>(valeur);
-		last_ = first_.get();
-		nbElements_ = 1;
-	}
-
-	unique_ptr<ListNode_impl<T>> first_;
-	ListNode_impl<T>* last_ = nullptr;
-	size_t               nbElements_ = 0;
+	unique_ptr<NodeType> first_;
+	NodeType*            last_ = nullptr;
+	size_t               size_ = 0;
 };
-
-
-template < typename T >
-void swap (List<T>& l1, List<T>& l2)
-{
-	std::swap(l1.first_, l2.first_);
-	std::swap(l1.last_, l2.last_);
-	std::swap(l1.nbElements_, l2.nbElements_);
-}
-
-template < typename T >
-ostream& operator<<(ostream& lhs, const List<T>& rhs)
-{
-	auto alignement = lhs.width();
-	rhs.afficher(lhs, alignement);
-	return lhs;
-}
-
