@@ -55,5 +55,15 @@ void runListExample() {
 
 int main() {
 	runListExample(); cout << "\n\n\n\n";
+
+	const List<int> foo = {1, 2, 3};
+	auto it = foo.begin();
+	cout << *it << "\n";
+	++it;
+	cout << *it << "\n";
+	--it;
+	cout << *it << "\n";
+	for (auto e : foo)
+		cout << e << " ";
 }
 
